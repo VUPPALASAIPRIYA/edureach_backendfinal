@@ -1,10 +1,12 @@
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
 import pandas as pd
 import logging
 from dotenv import load_dotenv
-import os
+
 app = Flask(__name__)
 
 # Enable CORS for all routes
@@ -12,8 +14,11 @@ CORS(app)
 
 # Setting up logging
 logging.basicConfig(level=logging.DEBUG)
+
+# MySQL Connection with hardcoded credentials
+
 load_dotenv()
-# MySQL Connection
+
 def get_mysql_connection():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST"),
@@ -21,6 +26,7 @@ def get_mysql_connection():
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
+
 # Upload CSV data to MySQL
 @app.route('/upload_students_csv', methods=['POST'])
 def upload_students_csv():
@@ -75,4 +81,4 @@ def get_student_data():
         return jsonify({"success": False, "message": "Error fetching student"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True,host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
