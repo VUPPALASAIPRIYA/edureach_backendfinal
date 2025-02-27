@@ -48,7 +48,8 @@
             const formData = new FormData(form);
 
             try {
-                const response = await fetch('https://SAIPRIYAVUPPALA.pythonanywhere.com/upload_students_csv', {
+                // Use relative URL
+                const response = await fetch('/upload_students_csv', {
                     method: 'POST',
                     body: formData,
                 });

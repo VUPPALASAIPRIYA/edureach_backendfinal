@@ -1,11 +1,11 @@
 import os
-
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
-import mysql.connector
 import pandas as pd
 import logging
 from dotenv import load_dotenv
+import psycopg2
+import psycopg2.extras
 
 app = Flask(__name__)
 
@@ -15,19 +15,23 @@ CORS(app)
 # Setting up logging
 logging.basicConfig(level=logging.DEBUG)
 
-# MySQL Connection with hardcoded credentials
-
+# Load environment variables
 load_dotenv()
 
-def get_mysql_connection():
-    return mysql.connector.connect(
+def get_postgres_connection():
+    return psycopg2.connect(
         host=os.getenv("DB_HOST"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
         database=os.getenv("DB_NAME")
     )
 
-# Upload CSV data to MySQL
+# Serve the index.html file
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+# Upload CSV data to PostgreSQL
 @app.route('/upload_students_csv', methods=['POST'])
 def upload_students_csv():
     try:
@@ -40,7 +44,7 @@ def upload_students_csv():
 
         df = pd.read_csv(csv_file)
 
-        conn = get_mysql_connection()
+        conn = get_postgres_connection()
         cursor = conn.cursor()
 
         query = """INSERT INTO students1 (student_id, student_name, student_phone, parent_phone)
@@ -65,8 +69,8 @@ def get_student_data():
         return jsonify({"success": False, "message": "Student ID is required"}), 400
 
     try:
-        conn = get_mysql_connection()
-        cursor = conn.cursor(dictionary=True)
+        conn = get_postgres_connection()
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) #returns dictionary
         query = "SELECT * FROM students1 WHERE student_id = %s"
         cursor.execute(query, (student_id,))
         student = cursor.fetchone()
@@ -81,4 +85,4 @@ def get_student_data():
         return jsonify({"success": False, "message": "Error fetching student"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.getenv("PORT", 8080)))
+    app.run(debug=True, host='0.0.0.0', port=5000)
